@@ -40,19 +40,24 @@ router.get('/read/:id.html', function (req, res, next) {
   var idRead = req.params.id;
   var idReadAbs = Math.abs(idRead);
 
-  var sql = "select * from detailStoryChap inner join Story on detailStoryChap.idStory = Story.idStory where Story.idStory = ?";
+  var sql = "select * from detailStoryChap inner join Story on detailStoryChap.idStory = Story.idStory where Story.idStory = ? order by chap";
   con.query(sql, idReadAbs, function (err, results) {
     if (err) {
       res.send(err);
     }
     else {
-      nextStory = [...results];
-      res.render('./ReadStory/ReadStory', {
-        data: results[0],
-        len: nextAndPre,
-        max: nextStory.length,
-        accessAbility: accessAbility
-      });
+      if (results.length != 0) {
+        nextStory = [...results];
+        res.render('./ReadStory/ReadStory', {
+          data: results[0],
+          len: nextAndPre,
+          max: nextStory.length,
+          accessAbility: accessAbility
+        });
+      }
+      else {
+        res.send('Truyen dang cap nhat');
+      }
     }
   });
 });
@@ -128,7 +133,7 @@ router.get('/insert/:id', function (req, res, next) {
         StoryInsert = [...results];
 
 
-        var sqlAvail = "select * from detailStoryChap where idStory = ?";
+        var sqlAvail = "select * from detailStoryChap where idStory = ? order by chap";
         con.query(sqlAvail, [idInsert], function (err, resultAvail) {
           if (err) {
             res.send(err);
@@ -159,37 +164,67 @@ router.post('/uploadfile', upload.any(), function (req, res, next) {
 
 });
 
-router.post('/upInfo', function (req, res, next) {
+var checkChap = 'false';
+router.get('/checkChap/:idStory/:chap', function (req, res, next) {
 
-  var Story = {
-    'name': req.body.nameStory,
-    'chap': req.body.chap,
-    'image': image[0],
-    'idStory': -1
-  }
+  var chap = req.params.chap;
+  var id = req.params.idStory;
 
-  var sql = "select idStory from Story where nameStory = ?";
+  var sql = "select chap from detailStoryChap where idStory = ? and chap = ?";
 
-  con.query(sql, [Story.name], function (err, result) {
+  con.query(sql, [id, chap], function (err, result) {
     if (err) {
       console.log(err);
     }
     else {
-      Story.idStory = result[0].idStory;
-
-      var sql2 = "insert into detailStoryChap (idStory,chap,ImgStory) values (?,?,?);";
-
-      con.query(sql2, [Story.idStory, Story.chap, Story.image], function (err, results) {
-        if (err) {
-          console.log(err);
-        }
-        else {
-          res.send("thanh cong");
-        }
-      });
+      checkChap = 'true';
+      res.send(result.length + '');
 
     }
   })
+
+
+
+});
+
+
+router.post('/upInfo', function (req, res, next) {
+  if (checkChap == 'true') {
+    var Story = {
+      'name': req.body.nameStory,
+      'chap': req.body.chap,
+      'image': image[0],
+      'idStory': -1
+    }
+
+    var sql = "select idStory from Story where nameStory = ?";
+
+    con.query(sql, [Story.name], function (err, result) {
+      if (err) {
+        console.log(err);
+      }
+      else {
+        Story.idStory = result[0].idStory;
+
+        var sql2 = "insert into detailStoryChap (idStory,chap,ImgStory) values (?,?,?);";
+
+        con.query(sql2, [Story.idStory, Story.chap, Story.image], function (err, results) {
+          if (err) {
+            console.log(err);
+          }
+          else {
+            res.send("thanh cong");
+            checkChap = 'false';
+          }
+        });
+
+      }
+
+    })
+  }
+  else {
+    res.send('nhap lai thong tin');
+  }
 
   image = [];
 

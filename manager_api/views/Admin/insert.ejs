@@ -38,19 +38,20 @@
 
     <div class="form-group">
       <label for="chap">Chap</label>
-      <input type="number" name="chap" class="form-control" id="exampleInputPassword1" placeholder="chap" %>">
+      <input type="number" name="chap" class="form-control" id="checkChap" placeholder="chap">
+      <div id = "checkChapResult" ></div>
     </div>
     <button type="submit" name="" id="" class="btn btn-primary" style="margin-bottom: 150px">insert</button>
   </form>
 </div>
 
+<script type="text/javascript" src="/javascripts/dropzone.js"></script>
 <script>
-
   Dropzone.options.uploadWidget = {
     paramName: 'file',
     maxFilesize: 1000, // MB
     maxFiles: 1,
-    dictDefaultMessage: 'Drag an image here to upload, or click to select one',
+    dictDefaultMessage: 'Get file pdf here',
     headers: {
       'x-csrf-token': document.querySelectorAll('meta[name=csrf-token]')[0].getAttributeNode('content').value,
     },
@@ -79,5 +80,29 @@
 
 </script>
 
-<script type="text/javascript" src="/javascripts/dropzone.js"></script>
 <% include ../footer %>
+
+<script>
+
+ $(document).ready(() => {
+      var chap = document.getElementById('checkChap');
+      $('#checkChap').blur(() => {
+         $.ajax({
+            url: '/checkChap/' + <%= StoryInsert[0].idStory %> + '/' + chap.value,
+            type: 'GET',
+            dataType: 'text',
+            success: (data) => {
+               var checkChapResult = document.getElementById('checkChapResult');
+               if(data == 0){
+                  checkChapResult.innerHTML = '<span style = "color:#7FFF00 ">ok</span>';
+               }
+               else{
+                  checkChapResult.innerHTML = '<span style = "color:#FF4500 ">Chap này đã tồn tại</span>';
+               }
+            },
+         });
+      });
+
+   })
+
+</script>
